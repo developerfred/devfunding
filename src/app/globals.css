@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+	.text-balance {
+		text-wrap: balance;
+	}
+}
+
+@layer base {
+	:root {
+		--background: 0 0% 100%;
+		--foreground: 0 0% 3.9%;
+
+		/* System Colors from UI Kit */
+		--system-black: 0 0% 13%; /* #1F2227 */
+		--system-white: 0 0% 100%; /* #FFFFFF */
+		--system-error: 0 72% 51%; /* #E62D2D */
+		--system-success: 108 62% 47%; /* #85C83E */
+		--system-validation: 45 100% 50%; /* #FFD74B */
+
+		/* Green Scale from UI Kit */
+		--green-50: 108 92% 95%; /* #EAFF08 */
+		--green-100: 108 75% 85%; /* #A8E88B */
+		--green-200: 108 65% 75%; /* #85C83E */
+		--green-300: 108 55% 65%; /* #698518 */
+		--green-400: 108 45% 55%; /* #417803 */
+		--green-500: 108 35% 45%; /* #324C16 */
+		--green-600: 108 25% 35%; /* #21330F */
+		--green-700: 108 15% 25%; /* #111907 */
+
+		/* Gray Scale from UI Kit */
+		--gray-50: 0 0% 85%; /* #D8D7D9 */
+		--gray-100: 0 0% 75%; /* #B8B8BF */
+		--gray-200: 0 0% 65%; /* #989F98 */
+		--gray-300: 0 0% 55%; /* #484D57 */
+		--gray-400: 0 0% 45%; /* #2E323A */
+		--gray-500: 0 0% 35%; /* #1A1C21 */
+
+		/* Component Colors */
+		--card: var(--background);
+		--card-foreground: var(--foreground);
+		--popover: var(--background);
+		--popover-foreground: var(--foreground);
+		--primary: var(--green-200);
+		--primary-foreground: var(--system-white);
+		--secondary: var(--gray-100);
+		--secondary-foreground: var(--system-black);
+		--muted: var(--gray-100);
+		--muted-foreground: var(--gray-400);
+		--accent: var(--green-100);
+		--accent-foreground: var(--system-black);
+		--destructive: var(--system-error);
+		--destructive-foreground: var(--system-white);
+		--border: var(--gray-200);
+		--input: var(--gray-200);
+		--ring: var(--green-200);
+		--radius: 0.5rem;
+	}
+
+	.dark {
+		--background: var(--gray-500);
+		--foreground: var(--system-white);
+		--card: var(--gray-500);
+		--card-foreground: var(--system-white);
+		--popover: var(--gray-500);
+		--popover-foreground: var(--system-white);
+		--primary: var(--green-200);
+		--primary-foreground: var(--system-white);
+		--secondary: var(--gray-400);
+		--secondary-foreground: var(--system-white);
+		--muted: var(--gray-400);
+		--muted-foreground: var(--gray-300);
+		--accent: var(--green-300);
+		--accent-foreground: var(--system-white);
+		--destructive: var(--system-error);
+		--destructive-foreground: var(--system-white);
+		--border: var(--gray-400);
+		--input: var(--gray-400);
+		--ring: var(--green-200);
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+}
+
+:root {
+	color-scheme: white;
+}
+
+/* Web3Modal custom styles */
+w3m-modal {
+	--w3m-background-color: var(--gray-500) !important;
+	--w3m-accent-color: var(--green-200) !important;
+	--w3m-z-index: 999;
+}
+
+/* Custom button styles */
+w3m-button {
+	background: var(--green-200) !important;
+	border-radius: 9999px !important;
+	transition: all 0.2s ease !important;
+}
+
+w3m-button:hover {
+	transform: scale(1.02);
+	filter: brightness(1.1);
+}
+
+/* Modal overlay */
+.w3m-overlay {
+	backdrop-filter: blur(6px);
+	background: rgba(0, 0, 0, 0.7) !important;
+}
