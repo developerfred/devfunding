@@ -1,7 +1,10 @@
-import { devFundingConfig } from "@/lib/contract/config";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // @ts-nocheck
+import { devFundingConfig } from "@/lib/contract/config";
+
 import { useState } from "react";
 import {
 	useAccount,

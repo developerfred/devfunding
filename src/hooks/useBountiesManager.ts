@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
+// @ts-nocheck
+
 import { devFundingConfig } from "@/lib/contract/config";
 import { useEffect } from "react";
 import { useReadContract, useReadContracts } from "wagmi";

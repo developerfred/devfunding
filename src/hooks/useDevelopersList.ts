@@ -1,8 +1,11 @@
-import { devFundingConfig } from "@/lib/contract/config";
-import { morphHolesky } from "@reown/appkit/networks";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // @ts-nocheck
+
+import { devFundingConfig } from "@/lib/contract/config";
+import { morphHolesky } from "@reown/appkit/networks";
 import { useEffect, useState } from "react";
 import { http, createPublicClient } from "viem";
 

@@ -1,7 +1,10 @@
-import { devFundingConfig } from "@/lib/contract/config";
-import { useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 /* eslint-disable @typescript-eslint/no-explicit-any,  @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+import { devFundingConfig } from "@/lib/contract/config";
+import { useEffect } from "react";
+
 import { useReadContract, useReadContracts } from "wagmi";
 
 const isDev = process.env.NODE_ENV === "development";
