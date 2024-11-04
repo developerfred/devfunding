@@ -8,11 +8,11 @@ import {
 	createWalletClient,
 	custom,
 } from "viem";
-import { morphHolesky } from "viem/chains";
+import {  morph } from "viem/chains";
 import { contractAddress, devFundingConfig } from "./config";
 
 export const publicClient = createPublicClient({
-	chain: morphHolesky,
+	chain:  morph,
 	transport: http(),
 });
 
@@ -20,7 +20,7 @@ export const walletClient: WalletClient | null = null;
 
 export const createViemWalletClient = (provider: any): WalletClient => {
 	return createWalletClient({
-		chain: morphHolesky,
+		chain:  morph,
 		transport: custom(provider),
 	});
 };

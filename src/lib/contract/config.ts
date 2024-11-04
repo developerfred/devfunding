@@ -4,7 +4,7 @@
 import type { Address } from "viem";
 
 export const contractAddress =
-	"0x8bDD366A31aBadf21818917Ce286Ea1543990d98" as const;
+	"0x5de932BD252DD79231C9eDB5F2e30D488B785109" as const;
 
 export const devFundingConfig = {
 	address: contractAddress as Address,
