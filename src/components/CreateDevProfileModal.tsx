@@ -1,35 +1,27 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+'use client'
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
+	DialogTitle,	
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { contractInteractions } from "@/lib/contract/client";
-import { devFundingConfig } from "@/lib/contract/config";
-import { useRef, useState, FormEvent, ChangeEvent } from "react";
-import { useForm } from "react-hook-form";
-import { http, createPublicClient, parseEther } from "viem";
-import { morphHolesky } from "viem/chains";
-import { useAccount, useTransaction, useWriteContract } from "wagmi";
 
-const client = createPublicClient({
-	chain: morphHolesky,
-	transport: http(process.env.REACT_APP_RPC_URL),
-});
+import { contractInteractions } from "@/lib/contract/client";
+
+import { useRef, useState, FormEvent} from "react";
+import { useAccount} from "wagmi";
+
 
 interface CreateDevProfileModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 }
 
-const CreateDevProfileModal: React.FC<CreateDevProfileModalProps> = ({ isOpen, onClose }) => {
+export const CreateDevProfileModal: React.FC<CreateDevProfileModalProps> = ({ isOpen, onClose }) => {
 	const [open, setOpen] = useState(isOpen);
 	const [skills, setSkills] = useState<string[]>([""]);
 	const { isConnected, address } = useAccount();
@@ -48,9 +40,19 @@ const CreateDevProfileModal: React.FC<CreateDevProfileModalProps> = ({ isOpen, o
 		});
 	};
 
+	const removeSkill = (index: number) => {
+		setSkills(prevSkills => prevSkills.filter((_, i) => i !== index));
+	};
+
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (formRef.current && !formRef.current.checkValidity()) {
+		if (!isConnected) {
+			console.error("Wallet is not connected");
+			return;
+		}
+
+		if (!address) {
+			console.error("No address available");
 			return;
 		}
 
@@ -60,28 +62,24 @@ const CreateDevProfileModal: React.FC<CreateDevProfileModalProps> = ({ isOpen, o
 		const filteredSkills = skills.filter(skill => skill.trim() !== "");
 
 		try {
-			if (isConnected && address) {
-				const result = await contractInteractions.writeFunctions.createDevProfile(
-					githubHandle,
-					filteredSkills,
-					portfolioUrl,
-				);
-				console.log("Transaction hash:", result.hash);
-				setOpen(false);
-				onClose();
-			} else {
-				console.error("Wallet is not connected");
-			}
+			const result = await contractInteractions.writeFunctions.createDevProfile(
+				githubHandle,
+				filteredSkills,
+				portfolioUrl
+			);
+			console.log("Transaction hash:", result.hash);
+			setOpen(false);
+			onClose();  
 		} catch (error) {
 			console.error("Error creating developer profile:", error);
 		}
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline">Create Developer Profile</Button>
-			</DialogTrigger>
+		<Dialog open={open} onOpenChange={(open) => {
+			setOpen(open);
+			if (!open) onClose(); 
+		}}>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
 					<DialogTitle>Create Developer Profile</DialogTitle>
@@ -90,11 +88,38 @@ const CreateDevProfileModal: React.FC<CreateDevProfileModalProps> = ({ isOpen, o
 					</DialogDescription>
 				</DialogHeader>
 				<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-					{/* ... input fields ... */}
+					<div>
+						<Label htmlFor="githubHandle">GitHub Handle</Label>
+						<Input id="githubHandle" name="githubHandle" required />
+					</div>
+					<div>
+						<Label htmlFor="portfolioUrl">Portfolio URL</Label>
+						<Input id="portfolioUrl" name="portfolioUrl" required />
+					</div>
+					{skills.map((skill, index) => (
+						<div key={index}>
+							<Label htmlFor={`skills[${index}]`}>Skill {index + 1}</Label>
+							<Input
+								id={`skills[${index}]`}
+								name={`skills[${index}]`}
+								value={skill}
+								onChange={(e) => updateSkill(index, e.target.value)}
+							/>
+							{index !== 0 && (
+								<Button type="button" variant="destructive" onClick={() => removeSkill(index)}>
+									Remove Skill
+								</Button>
+							)}
+						</div>
+					))}
+					<Button type="button" variant="outline" onClick={addSkill}>
+						Add Skill
+					</Button>
+					<Button type="submit" variant="default">
+						Create Profile
+					</Button>
 				</form>
 			</DialogContent>
 		</Dialog>
 	);
 };
-
-export default CreateDevProfileModal;

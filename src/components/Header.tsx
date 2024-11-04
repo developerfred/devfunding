@@ -3,9 +3,10 @@
 "use client";
 import ConnectButton from "@/components/ConnectButton";
 import { CreateBountyModal } from "@/components/CreateBountyModal";
-import CreateDevProfileModal from "@/components/CreateDevProfileModal";
+import { CreateDevProfileModal } from "@/components/CreateDevProfileModal";
 import { Award, Bell, Search, Target, UserPlus, Wallet } from "lucide-react";
 import React, { useState } from "react";
+import Link from 'next/link'
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 
-// Assuming these routes are correctly set up in your Next.js app
 const navigationTabs = [
-	{ name: "dashboard", label: "Dashboard" },
 	{ name: "grants", label: "Grants" },
 	{ name: "bounties", label: "Bounties" },
 	{ name: "governance", label: "Governance" },
@@ -47,10 +46,12 @@ const Header = () => {
 				<div className="flex justify-between items-center h-16">
 					{/* Logo Section */}
 					<div className="flex items-center">
-						<Award className="h-8 w-8 text-green-500 dark:text-green-400" />
-						<span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-							DevFunding
-						</span>
+						<Link href="/" className="flex no-underline ">
+							<Award className="h-8 w-8 text-green-500 dark:text-green-400" />
+							<span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
+								DevFunding
+							</span>
+						</Link>
 					</div>
 
 					{/* Search Bar */}
@@ -83,27 +84,7 @@ const Header = () => {
 					</nav>
 
 					{/* Right Section - Actions */}
-					<div className="flex items-center space-x-4">
-						{/* Create Actions Dropdown */}
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="outline" className="hidden md:flex">
-									Create
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem>
-									<Target className="mr-2 h-4 w-4" />
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() =>
-										setModalState((prev) => ({ ...prev, profile: true }))
-									}
-								>
-									<UserPlus className="mr-2 h-4 w-4" /> Developer Profile
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+					<div className="flex items-center space-x-4">						
 
 						{/* Notifications */}
 						<DropdownMenu>
@@ -129,7 +110,7 @@ const Header = () => {
 					</div>
 				</div>
 			</div>
-			{/* Modals */}
+			
 		</header>
 	);
 };

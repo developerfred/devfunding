@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
+// @ts-nocheck
 "use client";
 import BountyForm from "@/components/BountyForm";
 import { Button } from "@/components/ui/button";
@@ -13,35 +15,39 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useApproveToken } from "@/hooks/useApproveToken";
 import { useBountyData } from "@/hooks/useBountyData";
 import { useCreateBounty } from "@/hooks/useCreateBounty";
+import { contractAddress } from "@/lib/contract/config";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { http, createPublicClient, parseUnits } from "viem";
 import { useAccount, useReadContracts } from "wagmi";
 
-export const CreateBountyModal = () => {
-	const [open, setOpen] = useState(false);
+export const CreateBountyModal = ({ isOpen, onClose }) => {
 	const [isHighlighted, setIsHighlighted] = useState(false);
+	const [isCustomToken, setIsCustomToken] = useState(false);
+	const [customTokenAddress, setCustomTokenAddress] = useState('');
+	const [customTokenDecimals, setCustomTokenDecimals] = useState(0);
 	const { address } = useAccount();
+	const { createBounty, createHighlightedBounty, isPending, isError, isSuccess, error } = useCreateBounty();
+	const { approveToken, isApproving, approveError } = useApproveToken();
 
-	const {
-		createBounty,
-		createHighlightedBounty,
-		isPending,
-		isError,
-		isSuccess,
-		error,
-	} = useCreateBounty();
 
 	const handleSubmit = async (formData) => {
 		try {
-			const amountInWei = parseUnits(
-				formData.amount,
-				formData.currency === "ENT" ? 18 : 6,
-			);
-			const updatedFormData = { ...formData, amount: amountInWei };
+			// biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
+			let amountInWei;
+			if (isCustomToken) {
+				amountInWei = BigInt(formData.amount * (10 ** customTokenDecimals));
+			} else {
+				amountInWei = parseUnits(formData.amount, formData.currency === "ENT" ? 18 : 6);
+			}
+			const updatedFormData = { ...formData, amount: amountInWei, tokenAddress: isCustomToken ? customTokenAddress : formData.currency };
 
+			if (isCustomToken) {				
+				await approveToken(customTokenAddress, amountInWei, contractAddress);
+			}
 			if (isHighlighted) {
 				await createHighlightedBounty(updatedFormData);
 			} else {
@@ -49,24 +55,19 @@ export const CreateBountyModal = () => {
 			}
 
 			if (isSuccess) {
-				setOpen(false);
+				onClose(); 
 			}
 		} catch (err) {
 			console.error("Error submitting bounty:", err);
 		}
 	};
 
-	useEffect(() => {
-		if (isSuccess) {
-			setOpen(false);
-		}
-	}, [isSuccess]);
+	const onCancel = () => {
+		onClose(); 
+	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline">New Bounty</Button>
-			</DialogTrigger>
+		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
 					<DialogTitle>Create New Bounty</DialogTitle>
@@ -76,12 +77,18 @@ export const CreateBountyModal = () => {
 				</DialogHeader>
 				<BountyForm
 					onSubmit={handleSubmit}
-					onCancel={() => setOpen(false)}
-					isLoading={isPending}
+					onCancel={onCancel}
+					isLoading={isPending || isApproving}
 					isHighlighted={isHighlighted}
 					setIsHighlighted={setIsHighlighted}
 					currencyOptions={["ENT", "USDT", "ETH"]}
 					defaultCurrency="ENT"
+					isCustomToken={isCustomToken}
+					setIsCustomToken={setIsCustomToken}
+					customTokenAddress={customTokenAddress}
+					setCustomTokenAddress={setCustomTokenAddress}
+					customTokenDecimals={customTokenDecimals}
+					setCustomTokenDecimals={setCustomTokenDecimals}
 				/>
 			</DialogContent>
 		</Dialog>

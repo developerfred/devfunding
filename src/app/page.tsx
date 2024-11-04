@@ -17,8 +17,10 @@ import {
 	github,
 } from "lucide-react";
 import React from "react";
+import CreateGrantModal from "@/components/CreateGrantModal";
+import Link from 'next/link';
 
-export default function LandingPage() {
+export default function LandingPage() {	
 	return (
 		<div className="min-h-screen bg-white text-gray-800">
 			{/* Hero Section */}
@@ -31,9 +33,11 @@ export default function LandingPage() {
 						Connecting Web3 Developers with Protocol Funding Opportunities
 					</p>
 					<div className="flex gap-4 justify-center">
-						<button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center">
-							Apply for Grants <ChevronRight className="ml-2" size={20} />
-						</button>
+						<Link href="/grants">
+							<button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center">
+								Apply for Grants <ChevronRight className="ml-2" size={20} />
+							</button>
+						</Link>
 						<button className="border border-green-600 text-green-600 hover:bg-green-50 px-6 py-3 rounded-lg font-medium flex items-center">
 							Create a Profile <ChevronRight className="ml-2" size={20} />
 						</button>
@@ -174,7 +178,7 @@ export default function LandingPage() {
 						</button>
 					</div>
 				</div>
-			</section>
+			</section>			
 		</div>
 	);
 }

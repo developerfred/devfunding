@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 
 "use client";
-import CreateDevProfileModal from "@/components/CreateDevProfileModal";
+import { CreateDevProfileModal } from "@/components/CreateDevProfileModal";
 import CreateGrantModal from "@/components/CreateGrantModal";
 import { GrantApplication } from "@/components/GrantApplication";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { Bell, Plus, Rocket, Trophy, Users } from "lucide-react";
 import React, { useState } from "react";
 
 const GrantPage = () => {
+    const [activeTab, setActiveTab] = useState("grants");
 	const { grants, isLoading, error, grantCount } = useGrantsManager();
 	const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -56,10 +57,12 @@ const GrantPage = () => {
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex justify-between h-16 items-center">
 						<div className="flex items-center space-x-4">
-							<button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+							{/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+<button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
 								<Bell className="h-5 w-5 text-gray-500" />
 							</button>
-							<button
+							{/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+<button
 								className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-colors"
 								onClick={() => setIsCreateModalOpen(true)}
 							>
@@ -177,7 +180,7 @@ const GrantPage = () => {
 				isOpen={isCreateModalOpen}
 				onClose={() => setIsCreateModalOpen(false)}
 			/>
-		</div>
+		</div> 
 	);
 };
 

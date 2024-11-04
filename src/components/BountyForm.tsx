@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment,  @typescript-eslint/no-explicit-any  */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment,  @typescript-eslint/no-explicit-any, react/jsx-no-undef  */
 // @ts-nocheck
 
 "use client";
@@ -41,8 +41,16 @@ const BountyForm: React.FC<BountyFormProps> = ({
 	setIsHighlighted,
 	currencyOptions,
 	defaultCurrency,
+	isCustomToken,
+	setIsCustomToken,
+	customTokenAddress,
+	setCustomTokenAddress,
+	customTokenDecimals,
+	setCustomTokenDecimals
 }) => {
 	const { address } = useAccount();
+
+
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
@@ -58,10 +66,22 @@ const BountyForm: React.FC<BountyFormProps> = ({
 		await onSubmit(bountyData);
 	};
 
+	const handleChange = (e) => {
+		const { name, value } = e.target;
+		setFormData(prev => ({ ...prev, [name]: value }));
+	};
+
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<div className="grid w-full gap-1.5">
-				<Label htmlFor="amount">Amount (ETH)</Label>
+				<div>
+					<Label htmlFor="amount">Amount</Label>
+					<Input id="amount" name="amount" value={formData.amount} onChange={handleChange} placeholder="Amount of tokens" />
+				</div>
+				<div>
+					<Checkbox id="isCustomToken" checked={isCustomToken} onChange={() => setIsCustomToken(!isCustomToken)} />
+					<Label htmlFor="isCustomToken">Use Custom Token</Label>
+				</div>
 				<Input
 					id="amount"
 					name="amount"
@@ -71,6 +91,18 @@ const BountyForm: React.FC<BountyFormProps> = ({
 					className="col-span-3"
 				/>
 			</div>
+			{isCustomToken && (
+				<>
+					<div>
+						<Label htmlFor="customTokenAddress">Custom Token Address</Label>
+						<Input id="customTokenAddress" value={customTokenAddress} onChange={e => setCustomTokenAddress(e.target.value)} />
+					</div>
+					<div>
+						<Label htmlFor="customTokenDecimals">Token Decimals</Label>
+						<Input type="number" id="customTokenDecimals" value={customTokenDecimals} onChange={e => setCustomTokenDecimals(Number(e.target.value))} />
+					</div>
+				</>
+			)}
 
 			<div className="grid w-full gap-1.5">
 				<Label htmlFor="issueLink">Issue Link</Label>
