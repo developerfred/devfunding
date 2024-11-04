@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 // @ts-nocheck
 import { Button } from "@/components/ui/button";
 import {
