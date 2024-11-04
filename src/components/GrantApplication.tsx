@@ -11,7 +11,11 @@ import { useGrantApplication } from "@/hooks/useGrantApplication";
 import type { Grant } from "@/types";
 import { useAppKit } from "@reown/appkit/react";
 
-export const GrantApplication: React.FC<{ grant: Grant }> = ({ grant }) => {
+interface GrantApplicationProps {
+	grant: Grant;
+}
+
+export const GrantApplication: React.FC<GrantApplicationProps> = ({ grant }) => {
 	const { open: openConnectModal } = useAppKit();
 	const {
 		isLoading,
