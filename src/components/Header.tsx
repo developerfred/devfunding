@@ -3,7 +3,7 @@
 "use client";
 import ConnectButton from "@/components/ConnectButton";
 import { CreateBountyModal } from "@/components/CreateBountyModal";
-import  CreateDevProfileModal  from "@/components/CreateDevProfileModal";
+import CreateDevProfileModal from "@/components/CreateDevProfileModal";
 import { Award, Bell, Search, Target, UserPlus, Wallet } from "lucide-react";
 import React, { useState } from "react";
 
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 
+// Assuming these routes are correctly set up in your Next.js app
 const navigationTabs = [
 	{ name: "dashboard", label: "Dashboard" },
 	{ name: "grants", label: "Grants" },
@@ -34,6 +35,11 @@ const Header = () => {
 		{ id: 1, text: "New grant available", type: "info" },
 		{ id: 2, text: "Your application was approved", type: "success" },
 	]);
+
+	const handleTabClick = (name) => {
+		setActiveTab(name);		
+		window.location.href = `/${name === 'developers' ? 'leaderboard' : name}`;
+	};
 
 	return (
 		<header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
@@ -65,19 +71,11 @@ const Header = () => {
 							<Button
 								key={tab.name}
 								variant={activeTab === tab.name ? "default" : "ghost"}
-								onClick={() => {
-									if (tab.name === "developers") {
-										window.location.href = "/leaderboard";
-										setActiveTab(tab.name);
-									} else {
-										setActiveTab(tab.name);
-									}
-								}}
-								className={`px-3 py-2 text-sm ${
-									activeTab === tab.name
+								onClick={() => handleTabClick(tab.name)}
+								className={`px-3 py-2 text-sm ${activeTab === tab.name
 										? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-100"
 										: "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-								}`}
+									}`}
 							>
 								{tab.label}
 							</Button>
@@ -131,13 +129,7 @@ const Header = () => {
 					</div>
 				</div>
 			</div>
-
-			{/* Dev Profile Modal */}
-			<CreateDevProfileModal
-				isOpen={modalState.profile}
-				onClose={() => setModalState((prev) => ({ ...prev, profile: false }))}
-			/>
-			<CreateBountyModal />
+			{/* Modals */}
 		</header>
 	);
 };
