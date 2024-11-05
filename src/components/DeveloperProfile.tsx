@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 // @ts-nocheck
 
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +28,8 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 	useEffect(() => {
 		const loadDeveloperData = async () => {
 			try {
-				const [devDetails] = await contractInteractions.viewFunctions.getDeveloperDetails(address);
+				const [devDetails] =
+					await contractInteractions.viewFunctions.getDeveloperDetails(address);
 
 				setProfile({
 					githubHandle: devDetails.githubHandle,
@@ -47,7 +47,8 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 				});
 
 				// Verificar status premium
-				const premiumStatus = await contractInteractions.viewFunctions.isPremiumUser(address);
+				const premiumStatus =
+					await contractInteractions.viewFunctions.isPremiumUser(address);
 				setIsPremium(premiumStatus);
 
 				setLoading(false);
@@ -69,17 +70,16 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 			await contractInteractions.writeFunctions.updateDevProfile(
 				formData.githubHandle,
 				formData.skills,
-				formData.portfolioUrl
+				formData.portfolioUrl,
 			);
 
-			
 			if (profile) {
 				setProfile({
 					...formData,
 					isVerified,
 					isPremium,
 					completedGrants: profile.completedGrants,
-					reputation: profile.reputation
+					reputation: profile.reputation,
 				});
 			}
 
@@ -99,7 +99,7 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 			if (profile) {
 				setProfile({
 					...profile,
-					isPremium: true
+					isPremium: true,
 				});
 			}
 		} catch (error) {
@@ -111,7 +111,7 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { id, value } = e.target;
-		if (id === 'skills') {
+		if (id === "skills") {
 			setFormData({
 				...formData,
 				skills: value.split(",").map((s) => s.trim()),
@@ -197,7 +197,9 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 									<h3 className="font-medium">Skills</h3>
 									<div className="flex flex-wrap gap-2 mt-2">
 										{profile.skills.map((skill, i) => (
-											<Badge key={i} variant="secondary">{skill}</Badge>
+											<Badge key={i} variant="secondary">
+												{skill}
+											</Badge>
 										))}
 									</div>
 								</div>
@@ -227,13 +229,22 @@ export const DeveloperProfile = ({ address }: { address: string }) => {
 					<div>
 						<h3 className="font-medium">Premium Membership</h3>
 						<div className="grid grid-cols-3 gap-4 mt-2">
-							<Button onClick={() => handlePurchasePremium(1)} disabled={loading}>
+							<Button
+								onClick={() => handlePurchasePremium(1)}
+								disabled={loading}
+							>
 								1 Month
 							</Button>
-							<Button onClick={() => handlePurchasePremium(6)} disabled={loading}>
+							<Button
+								onClick={() => handlePurchasePremium(6)}
+								disabled={loading}
+							>
 								6 Months
 							</Button>
-							<Button onClick={() => handlePurchasePremium(12)} disabled={loading}>
+							<Button
+								onClick={() => handlePurchasePremium(12)}
+								disabled={loading}
+							>
 								12 Months
 							</Button>
 						</div>

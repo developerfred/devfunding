@@ -16,15 +16,23 @@ interface DisputeBoardProps {
 	onVoteComplete?: () => void;
 }
 
-export const DisputeBoard: React.FC<DisputeBoardProps> = ({ disputeId, onVoteComplete }) => {
+export const DisputeBoard: React.FC<DisputeBoardProps> = ({
+	disputeId,
+	onVoteComplete,
+}) => {
 	const [dispute, setDispute] = useState<Dispute | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { toast } = useToast();
 
 	const fetchDispute = async () => {
 		try {
-			const [isDisputeResolved, resolutionOutcome, yesVotes, noVotes, startTime] =
-				await contractInteractions.disputes(disputeId);
+			const [
+				isDisputeResolved,
+				resolutionOutcome,
+				yesVotes,
+				noVotes,
+				startTime,
+			] = await contractInteractions.disputes(disputeId);
 			setDispute({
 				id: disputeId,
 				isDisputeResolved,
@@ -34,7 +42,7 @@ export const DisputeBoard: React.FC<DisputeBoardProps> = ({ disputeId, onVoteCom
 				createdAt: Number(startTime),
 			});
 		} catch (error) {
-			console.error('Error fetching dispute:', error);
+			console.error("Error fetching dispute:", error);
 			toast({
 				title: "Error",
 				description: "Failed to fetch dispute details",
@@ -56,7 +64,7 @@ export const DisputeBoard: React.FC<DisputeBoardProps> = ({ disputeId, onVoteCom
 			await fetchDispute();
 			onVoteComplete?.();
 		} catch (error) {
-			console.error('Error voting:', error);
+			console.error("Error voting:", error);
 			toast({
 				title: "Error",
 				description: "Failed to submit vote",
@@ -77,7 +85,7 @@ export const DisputeBoard: React.FC<DisputeBoardProps> = ({ disputeId, onVoteCom
 			});
 			await fetchDispute();
 		} catch (error) {
-			console.error('Error raising dispute:', error);
+			console.error("Error raising dispute:", error);
 			toast({
 				title: "Error",
 				description: "Failed to raise dispute",
@@ -118,7 +126,9 @@ export const DisputeBoard: React.FC<DisputeBoardProps> = ({ disputeId, onVoteCom
 
 					{dispute.isDisputeResolved ? (
 						<Alert>
-							<AlertDescription>Resolution: {dispute.resolutionOutcome}</AlertDescription>
+							<AlertDescription>
+								Resolution: {dispute.resolutionOutcome}
+							</AlertDescription>
 						</Alert>
 					) : (
 						<div>
@@ -135,7 +145,11 @@ export const DisputeBoard: React.FC<DisputeBoardProps> = ({ disputeId, onVoteCom
 								<Button onClick={() => handleVote(true)} disabled={isLoading}>
 									Vote Yes
 								</Button>
-								<Button onClick={() => handleVote(false)} variant="destructive" disabled={isLoading}>
+								<Button
+									onClick={() => handleVote(false)}
+									variant="destructive"
+									disabled={isLoading}
+								>
 									Vote No
 								</Button>
 							</div>

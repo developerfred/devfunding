@@ -2,11 +2,9 @@
 
 "use client";
 import ConnectButton from "@/components/ConnectButton";
-import { CreateBountyModal } from "@/components/CreateBountyModal";
-import { CreateDevProfileModal } from "@/components/CreateDevProfileModal";
 import { Award, Bell, Search, Target, UserPlus, Wallet } from "lucide-react";
 import React, { useState } from "react";
-import Link from 'next/link'
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +34,8 @@ const Header = () => {
 	]);
 
 	const handleTabClick = (name) => {
-		setActiveTab(name);		
-		window.location.href = `/${name === 'developers' ? 'leaderboard' : name}`;
+		setActiveTab(name);
+		window.location.href = `/${name === "developers" ? "leaderboard" : name}`;
 	};
 
 	return (
@@ -73,10 +71,11 @@ const Header = () => {
 								key={tab.name}
 								variant={activeTab === tab.name ? "default" : "ghost"}
 								onClick={() => handleTabClick(tab.name)}
-								className={`px-3 py-2 text-sm ${activeTab === tab.name
+								className={`px-3 py-2 text-sm ${
+									activeTab === tab.name
 										? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-100"
 										: "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-									}`}
+								}`}
 							>
 								{tab.label}
 							</Button>
@@ -84,8 +83,7 @@ const Header = () => {
 					</nav>
 
 					{/* Right Section - Actions */}
-					<div className="flex items-center space-x-4">						
-
+					<div className="flex items-center space-x-4">
 						{/* Notifications */}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -110,7 +108,6 @@ const Header = () => {
 					</div>
 				</div>
 			</div>
-			
 		</header>
 	);
 };

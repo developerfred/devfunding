@@ -6,7 +6,12 @@ import type { Address } from "viem";
 export const contractAddress =
 	"0x5de932BD252DD79231C9eDB5F2e30D488B785109" as const;
 
+export const tokenAddress =
+	"0xf5056B96ab242C566002852d0b98ce0BcDf1af51" as const;
+
+
 export const devFundingConfig = {
+	tokenAddress: tokenAddress as Address,
 	address: contractAddress as Address,
 	abi: [
 		{
@@ -775,49 +780,6 @@ export const devFundingConfig = {
 		{ type: "error", name: "ReentrancyGuardReentrantCall", inputs: [] },
 	] as const,
 } as const;
-
-export interface CurrentAd {
-	link: string;
-	imageUrl: string;
-	price: bigint;
-	advertiser: Address;
-	referrer: Address;
-	isActive: boolean;
-	engagements: bigint;
-	createdAt: bigint;
-}
-
-export interface Advertisement {
-	link: string;
-	imageUrl: string;
-	price: bigint;
-	advertiser: Address;
-	referrer: Address;
-	isActive: boolean;
-	engagements: bigint;
-	createdAt: bigint;
-	index?: number;
-}
-
-export interface UserStats {
-	totalEngagements: bigint;
-	engagedAdsCount: bigint;
-	level: bigint;
-	isActive: boolean;
-}
-
-export interface UserDetails {
-	reputation: bigint;
-	timesChief: bigint;
-	referredBy: Address;
-	isAdvertiser: boolean;
-}
-
-export interface SpecialEvent {
-	name: string;
-	duration: bigint;
-	multiplier: bigint;
-}
 
 export const FRESH_DATA_INTERVAL = 30_000;
 

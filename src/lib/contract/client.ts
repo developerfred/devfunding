@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment, 
+ react-hooks/rules-of-hooks */
 // @ts-nocheck
 import {
 	http,
@@ -8,6 +9,7 @@ import {
 	createWalletClient,
 	custom,
 } from "viem";
+
 import {  morph } from "viem/chains";
 import { contractAddress, devFundingConfig } from "./config";
 
@@ -16,8 +18,7 @@ export const publicClient = createPublicClient({
 	transport: http(),
 });
 
-export const walletClient: WalletClient | null = null;
-
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const createViemWalletClient = (provider: any): WalletClient => {
 	return createWalletClient({
 		chain:  morph,
@@ -25,15 +26,13 @@ export const createViemWalletClient = (provider: any): WalletClient => {
 	});
 };
 
-const getWalletClient = (): WalletClient => {
+const getWalletClient = async (): Promise<WalletClient> => {
+	const { data: walletClient } = useWalletClient();
 	if (!walletClient) {
-		throw new Error(
-			"Wallet client has not been initialized. Please connect a wallet first.",
-		);
+		throw new Error("Wallet not connected");
 	}
 	return walletClient;
 };
-
 export const contractInteractions = {
 	viewFunctions: {
 		async getBounty(
@@ -235,14 +234,17 @@ export const contractInteractions = {
 			});
 		},
 
-        async disputes(id: number, client: PublicClient = publicClient): Promise<[boolean, string, bigint, bigint, bigint]> {
-            return client.readContract({
-                address: devFundingConfig.address,
-                abi: devFundingConfig.abi,
-                functionName: 'disputes',
-                args: [BigInt(id)],
-            });
-        },
+		async disputes(
+			id: number,
+			client: PublicClient = publicClient,
+		): Promise<[boolean, string, bigint, bigint, bigint]> {
+			return client.readContract({
+				address: devFundingConfig.address,
+				abi: devFundingConfig.abi,
+				functionName: "disputes",
+				args: [BigInt(id)],
+			});
+		},
 	},
 	writeFunctions: {
 		async applyForGrant(grantId: number): Promise<any> {
@@ -294,51 +296,62 @@ export const contractInteractions = {
 		},
 
 		createGrant: async (
-      amount: bigint,
-      description: string,
-      requirements: string, 
-      durationDays: number,
-      referrer: `0x${string}`
-    ) => {
-      try {        
-        const provider = (window as any).ethereum
-        if (!provider) {
-          throw new Error('No wallet provider found')
-        }
+			amount: bigint,
+			description: string,
+			requirements: string,
+			durationDays: number,
+			referrer: `0x${string}`,
+		) => {
+			try {
+				const provider = (window as any).ethereum;
+				if (!provider) {
+					throw new Error("No wallet provider found");
+				}
 
-        // Criar wallet client
-        const walletClient = createViemWalletClient(provider)
-        
-        // Obter endereço da conta conectada
-        const [address] = await walletClient.getAddresses()
+				// Criar wallet client
+				const walletClient = createViemWalletClient(provider);
 
-        // Preparar a transação
-        const { request } = await publicClient.simulateContract({
-          address: devFundingConfig.address,
-          abi: devFundingConfig.abi,
-          functionName: 'createGrant',
-          args: [amount, description, requirements, BigInt(durationDays), referrer],
-          account: address,
-        })
+				// Obter endereço da conta conectada
+				const [address] = await walletClient.getAddresses();
 
-        // Enviar a transação
-        const hash = await walletClient.writeContract(request)
-        
-        // Aguardar confirmação
-        const receipt = await publicClient.waitForTransactionReceipt({ 
-          hash 
-        })
+				// Preparar a transação
+				const { request } = await publicClient.simulateContract({
+					address: devFundingConfig.address,
+					abi: devFundingConfig.abi,
+					functionName: "createGrant",
+					args: [
+						amount,
+						description,
+						requirements,
+						BigInt(durationDays),
+						referrer,
+					],
+					account: address,
+				});
 
-        return receipt
-		} catch (error) {
-        console.error('Error in createGrant:', error)
-        throw error
-      }
-    },
+				// Enviar a transação
+				const hash = await walletClient.writeContract(request);
+
+				// Aguardar confirmação
+				const receipt = await publicClient.waitForTransactionReceipt({
+					hash,
+				});
+
+				return receipt;
+			} catch (error) {
+				console.error("Error in createGrant:", error);
+				throw error;
+			}
+		},
 
 		async withdrawReferralEarnings(): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -349,8 +362,13 @@ export const contractInteractions = {
 		},
 
 		async withdrawPlatformFees(): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -360,8 +378,14 @@ export const contractInteractions = {
 			return client.writeContract(request);
 		},
 
-		async cancelGrant(client: WalletClient, grantId: number): Promise<any> {
-			const [address] = await client.requestAddresses();
+		async cancelGrant(grantId: number): Promise<any> {
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -372,8 +396,14 @@ export const contractInteractions = {
 			return client.writeContract(request);
 		},
 
-		async claimGrant(client: WalletClient, grantId: number): Promise<any> {
-			const [address] = await client.requestAddresses();
+		async claimGrant(grantId: number): Promise<any> {
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -384,12 +414,14 @@ export const contractInteractions = {
 			return client.writeContract(request);
 		},
 
-		async contributeToBounty(
-			client: WalletClient,
-			bountyId: number,
-			amount: bigint,
-		): Promise<any> {
-			const [address] = await client.requestAddresses();
+		async contributeToBounty(bountyId: number, amount: bigint): Promise<any> {
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -418,8 +450,13 @@ export const contractInteractions = {
 		},
 
 		async proposeImprovement(proposal: string): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -431,8 +468,13 @@ export const contractInteractions = {
 		},
 
 		async purchasePremium(durationMonths: number): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -444,8 +486,13 @@ export const contractInteractions = {
 		},
 
 		async raiseDispute(id: number): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -460,8 +507,13 @@ export const contractInteractions = {
 			developer: string,
 			activityDescription: string,
 		): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -473,8 +525,13 @@ export const contractInteractions = {
 		},
 
 		async registerReferral(referrer: string): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -486,8 +543,14 @@ export const contractInteractions = {
 		},
 
 		async renewPremium(additionalMonths: number): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
+
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -499,8 +562,14 @@ export const contractInteractions = {
 		},
 
 		async selectDeveloper(grantId: number, developer: string): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
+
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -512,8 +581,13 @@ export const contractInteractions = {
 		},
 
 		async sendMessage(grantOrBountyId: number, message: string): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -525,8 +599,13 @@ export const contractInteractions = {
 		},
 
 		async transferGrant(grantId: number, newCreator: string): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -542,8 +621,13 @@ export const contractInteractions = {
 			skills: string[],
 			portfolioUrl: string,
 		): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -555,8 +639,13 @@ export const contractInteractions = {
 		},
 
 		async updatePlatformFee(newFeeBps: bigint): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -568,8 +657,13 @@ export const contractInteractions = {
 		},
 
 		async updatePremiumPrice(newPrice: bigint): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -581,8 +675,13 @@ export const contractInteractions = {
 		},
 
 		async verifyDeveloper(devAddress: string): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -594,8 +693,13 @@ export const contractInteractions = {
 		},
 
 		async voteForProposal(proposalId: number): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -607,8 +711,13 @@ export const contractInteractions = {
 		},
 
 		async voteOnDispute(id: number, vote: boolean): Promise<any> {
-			const client = getWalletClient();
-			const [address] = await client.requestAddresses();
+			const provider = (window as any).ethereum;
+			if (!provider) {
+				throw new Error("No wallet provider found");
+			}
+
+			const walletClient = createViemWalletClient(provider);
+			const [address] = await walletClient.getAddresses();
 			const { request } = await publicClient.simulateContract({
 				account: address,
 				address: contractAddress,
@@ -620,3 +729,4 @@ export const contractInteractions = {
 		},
 	},
 };
+export { devFundingConfig };

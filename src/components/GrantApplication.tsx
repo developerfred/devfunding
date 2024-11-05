@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any  */
 // @ts-nocheck
+
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -9,43 +12,107 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { useGrantApplication } from "@/hooks/useGrantApplication";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { publicClient, devFundingConfig } from "@/lib/contract/client";
+import { createWalletClient, custom } from "viem";
+import { morph } from "viem/chains";
 import type { Grant } from "@/types";
-import { useAppKit } from "@reown/appkit/react";
+
+type FlexibleProvider = {
+	request: (...args: any[]) => Promise<any>;
+	[key: string]: any;
+};
 
 interface GrantApplicationProps {
 	grant: Grant;
+	onClose?: () => void;
 }
 
-export const GrantApplication: React.FC<GrantApplicationProps> = ({ grant }) => {
-	const { open: openConnectModal } = useAppKit();
-	const {
-		isLoading,
-		isSuccess,
-		error,
-		isConnected,
-		applyForGrant,
-		isTransactionLoading,
-	} = useGrantApplication(grant.id);
+const GrantApplication: React.FC<GrantApplicationProps> = ({ grant, onClose }) => {
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState(false);
+	const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState<boolean>(false);
+	const [walletClient, setWalletClient] = useState<any>(null);
+	const [isOpen, setIsOpen] = useState(false);
 
-	if (!isConnected) {
+	const checkMetaMaskInstallation = () => {
+		const provider = typeof window !== "undefined" ? window.ethereum : undefined;
+		const isInstalled = !!provider?.isMetaMask;
+		setIsMetaMaskInstalled(isInstalled);
+
+		if (isInstalled && provider) {
+			const flexibleProvider = provider as FlexibleProvider;
+			const client = createWalletClient({
+				chain: morph,
+				transport: custom(flexibleProvider),
+			});
+			setWalletClient(client);
+		}
+	};
+
+	useEffect(() => {
+		checkMetaMaskInstallation();
+	}, []);
+
+	const handleApply = async () => {
+		setIsSubmitting(true);
+		setError("");
+
+		try {
+			if (!isMetaMaskInstalled || !walletClient) {
+				setError("Please install a web3 wallet to apply for grants.");
+				return;
+			}
+
+			const [address] = await walletClient.requestAddresses();
+
+			// Prepare transaction
+			const { request } = await publicClient.simulateContract({
+				address: devFundingConfig.address,
+				abi: devFundingConfig.abi,
+				functionName: "applyForGrant",
+				args: [BigInt(grant.id)],
+				account: address,
+			});
+
+			// Send transaction
+			const hash = await walletClient.writeContract(request);
+
+			// Wait for confirmation
+			const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+			setSuccess(true);
+			setTimeout(() => {
+				setIsOpen(false);
+				if (onClose) onClose();
+				setSuccess(false);
+			}, 2000);
+		} catch (err) {
+			setError(err.message || "Failed to apply for grant. Please try again.");
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	if (!isMetaMaskInstalled) {
 		return (
-			<Button onClick={openConnectModal} variant="default">
-				Connect Wallet to Apply
+			<Button onClick={checkMetaMaskInstallation} variant="default">
+				Install Web3 Wallet to Apply
 			</Button>
 		);
 	}
 
 	return (
-		<Dialog>
+		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
 				<Button variant="default">Apply for Grant</Button>
 			</DialogTrigger>
-			<DialogContent>
+			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
 					<DialogTitle>Apply for Grant #{grant.id}</DialogTitle>
 					<DialogDescription>
-						Review and confirm your application details below.
+						Review and confirm your application for this grant
 					</DialogDescription>
 				</DialogHeader>
 
@@ -56,9 +123,7 @@ export const GrantApplication: React.FC<GrantApplicationProps> = ({ grant }) => 
 					</div>
 					<div>
 						<h3 className="text-sm font-medium leading-none">Requirements</h3>
-						<p className="text-sm text-muted-foreground">
-							{grant.requirements}
-						</p>
+						<p className="text-sm text-muted-foreground">{grant.requirements}</p>
 					</div>
 					<div>
 						<h3 className="text-sm font-medium leading-none">Amount</h3>
@@ -66,34 +131,46 @@ export const GrantApplication: React.FC<GrantApplicationProps> = ({ grant }) => 
 							${Number(grant.amount) / 1e18}
 						</p>
 					</div>
+
+					{error && (
+						<Alert variant="destructive">
+							<AlertDescription>{error}</AlertDescription>
+						</Alert>
+					)}
+
+					{success && (
+						<Alert className="bg-green-50 border-green-200">
+							<AlertDescription className="text-green-600">
+								Successfully applied for grant!
+							</AlertDescription>
+						</Alert>
+					)}
 				</div>
 
-				{error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-
-				<Button
-					onClick={applyForGrant}
-					disabled={isLoading || isTransactionLoading || isSuccess}
-				>
-					{isLoading || isTransactionLoading
-						? "Applying..."
-						: isSuccess
-							? "Applied!"
-							: "Submit Application"}
-				</Button>
-
-				{isTransactionLoading && (
-					<p className="text-sm text-muted-foreground mt-4">
-						Waiting for transaction confirmation...
-					</p>
-				)}
-
-				{isSuccess && (
-					<p className="text-sm text-green-500 mt-4">
-						Your application has been submitted successfully. Check your wallet
-						for transaction details.
-					</p>
-				)}
+				<div className="flex justify-end gap-4 mt-4">
+					<Button
+						variant="outline"
+						onClick={() => setIsOpen(false)}
+						disabled={isSubmitting}
+					>
+						Cancel
+					</Button>
+					<Button onClick={handleApply} disabled={isSubmitting || success}>
+						{isSubmitting ? (
+							<>
+								<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+								Applying...
+							</>
+						) : success ? (
+							"Applied!"
+						) : (
+							"Submit Application"
+						)}
+					</Button>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);
 };
+
+export default GrantApplication;
