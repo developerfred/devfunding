@@ -41,25 +41,24 @@ export interface Dispute {
 	noVotes: number;
 }
 
-
 export type Currency = "ENT" | "USD" | "EUR";
 
 export interface FormData {
-  amount: string;
-  currency: Currency;
-  description: string;
-  requirements: string;
-  durationDays: string;
-  referrer: string;
+	amount: string;
+	currency: Currency;
+	description: string;
+	requirements: string;
+	durationDays: string;
+	referrer: string;
 }
 
 export interface Dispute {
-  id: number;
-  grantOrBountyId: number;
-  isDisputeResolved: boolean;
-  resolutionOutcome: string;
-  yesVotes: number;
-  noVotes: number;
-  createdAt: number;
-  disputeInitiator: string;
+	id: number;
+	grantOrBountyId: number;
+	isDisputeResolved: boolean;
+	resolutionOutcome: string;
+	yesVotes: number;
+	noVotes: number;
+	createdAt: number;
+	disputeInitiator: string;
 }

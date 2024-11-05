@@ -59,7 +59,7 @@ export default function RootLayout({
 							</main>
 						</ContextProvider>
 					</div>
-				</div>
+				</div>				
 			</body>
 		</html>
 	);

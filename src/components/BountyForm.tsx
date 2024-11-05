@@ -46,11 +46,9 @@ const BountyForm: React.FC<BountyFormProps> = ({
 	customTokenAddress,
 	setCustomTokenAddress,
 	customTokenDecimals,
-	setCustomTokenDecimals
+	setCustomTokenDecimals,
 }) => {
 	const { address } = useAccount();
-
-
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
@@ -68,7 +66,7 @@ const BountyForm: React.FC<BountyFormProps> = ({
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
-		setFormData(prev => ({ ...prev, [name]: value }));
+		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
 	return (
@@ -76,10 +74,20 @@ const BountyForm: React.FC<BountyFormProps> = ({
 			<div className="grid w-full gap-1.5">
 				<div>
 					<Label htmlFor="amount">Amount</Label>
-					<Input id="amount" name="amount" value={formData.amount} onChange={handleChange} placeholder="Amount of tokens" />
+					<Input
+						id="amount"
+						name="amount"
+						value={formData.amount}
+						onChange={handleChange}
+						placeholder="Amount of tokens"
+					/>
 				</div>
 				<div>
-					<Checkbox id="isCustomToken" checked={isCustomToken} onChange={() => setIsCustomToken(!isCustomToken)} />
+					<Checkbox
+						id="isCustomToken"
+						checked={isCustomToken}
+						onChange={() => setIsCustomToken(!isCustomToken)}
+					/>
 					<Label htmlFor="isCustomToken">Use Custom Token</Label>
 				</div>
 				<Input
@@ -95,11 +103,20 @@ const BountyForm: React.FC<BountyFormProps> = ({
 				<>
 					<div>
 						<Label htmlFor="customTokenAddress">Custom Token Address</Label>
-						<Input id="customTokenAddress" value={customTokenAddress} onChange={e => setCustomTokenAddress(e.target.value)} />
+						<Input
+							id="customTokenAddress"
+							value={customTokenAddress}
+							onChange={(e) => setCustomTokenAddress(e.target.value)}
+						/>
 					</div>
 					<div>
 						<Label htmlFor="customTokenDecimals">Token Decimals</Label>
-						<Input type="number" id="customTokenDecimals" value={customTokenDecimals} onChange={e => setCustomTokenDecimals(Number(e.target.value))} />
+						<Input
+							type="number"
+							id="customTokenDecimals"
+							value={customTokenDecimals}
+							onChange={(e) => setCustomTokenDecimals(Number(e.target.value))}
+						/>
 					</div>
 				</>
 			)}

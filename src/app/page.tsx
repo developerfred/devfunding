@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
 // @ts-nocheck
 
+"use client";
 import {
 	Award,
 	BarChart,
@@ -17,10 +18,13 @@ import {
 	github,
 } from "lucide-react";
 import React from "react";
-import CreateGrantModal from "@/components/CreateGrantModal";
-import Link from 'next/link';
+import { CreateGrantModal } from "@/components/CreateGrantModal";
+import CreateProfileModal from "@/components/CreateDevProfileModal";
+import Link from "next/link";
+import { useState } from "react";
 
-export default function LandingPage() {	
+export default function LandingPage() {
+	const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 	return (
 		<div className="min-h-screen bg-white text-gray-800">
 			{/* Hero Section */}
@@ -38,7 +42,10 @@ export default function LandingPage() {
 								Apply for Grants <ChevronRight className="ml-2" size={20} />
 							</button>
 						</Link>
-						<button className="border border-green-600 text-green-600 hover:bg-green-50 px-6 py-3 rounded-lg font-medium flex items-center">
+						<button
+							className="border border-green-600 text-green-600 hover:bg-green-50 px-6 py-3 rounded-lg font-medium flex items-center"
+							onClick={() => setIsProfileModalOpen(true)}
+						>
 							Create a Profile <ChevronRight className="ml-2" size={20} />
 						</button>
 					</div>
@@ -178,7 +185,11 @@ export default function LandingPage() {
 						</button>
 					</div>
 				</div>
-			</section>			
+			</section>
+			<CreateProfileModal
+				isOpen={isProfileModalOpen}
+				onClose={() => setIsProfileModalOpen(false)}
+			/>
 		</div>
 	);
 }

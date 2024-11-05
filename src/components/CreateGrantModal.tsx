@@ -1,5 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment  */
-'use client'
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps  */
+// @ts-nocheck
+
+import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,30 +14,92 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { devFundingConfig } from "@/lib/contract/config";
-import { contractInteractions } from "@/lib/contract/client";
+import { publicClient } from "@/lib/contract/client";
 import { Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { parseUnits } from "viem";
+import { parseUnits, createWalletClient, custom } from "viem";
+import { morphHolesky } from "viem/chains";
 import { useAccount } from "wagmi";
-import { FormData } from "@/types";
+import { contractAddress } from "@/lib/contract/config";
+
+type FlexibleProvider = {
+	request: (...args: any[]) => Promise<any>;
+	[key: string]: any;
+};
+
+interface FormData {
+	amount: string;
+	description: string;
+	requirements: string;
+	durationDays: string;
+	referrer: string;
+	isHighlighted: boolean;
+}
 
 const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 	isOpen,
-	onClose
+	onClose,
 }) => {
 	const { address } = useAccount();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [walletClient, setWalletClient] = useState<any>(null);
+	const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
+	const [isPremiumUser, setIsPremiumUser] = useState(false);
+	const [premiumExpiry, setPremiumExpiry] = useState<number>(0);
+
 	const [formData, setFormData] = useState<FormData>({
 		amount: "",
-		currency: "ENT",
 		description: "",
 		requirements: "",
 		durationDays: "",
 		referrer: "",
+		isHighlighted: false,
 	});
+
 	const [error, setError] = useState<string | null>(null);
-	const [txHash, setTxHash] = useState<string | null>(null);
+	const [success, setSuccess] = useState(false);
+
+	useEffect(() => {
+		checkMetaMaskInstallation();
+	}, []);
+
+	useEffect(() => {
+		if (address) {
+			checkPremiumStatus();
+		}
+	}, [address]);
+
+	const checkMetaMaskInstallation = () => {
+		const provider = typeof window !== "undefined" ? window.ethereum : undefined;
+		const isInstalled = !!provider?.isMetaMask;
+		setIsMetaMaskInstalled(isInstalled);
+
+		if (isInstalled && provider) {
+			const flexibleProvider = provider as FlexibleProvider;
+			const client = createWalletClient({
+				chain: morphHolesky,
+				transport: custom(flexibleProvider),
+			});
+			setWalletClient(client);
+		}
+	};
+
+	const checkPremiumStatus = async () => {
+		try {
+			const [isPremium, expiryTime] = await publicClient.readContract({
+				address: devFundingConfig.address,
+				abi: devFundingConfig.abi,
+				functionName: "checkPremiumStatus",
+				args: [address],
+			});
+
+			setIsPremiumUser(isPremium);
+			setPremiumExpiry(Number(expiryTime));
+		} catch (err) {
+			console.error("Error checking premium status:", err);
+		}
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -43,28 +107,68 @@ const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 		setError(null);
 
 		try {
+			if (!isMetaMaskInstalled || !walletClient) {
+				throw new Error("Please install a web3 wallet first");
+			}
+
 			if (!address) {
 				throw new Error("Please connect your wallet first");
 			}
 
-			const decimalPlaces = formData.currency === "ENT" ? 18 : 6;
-			const amountInWei = parseUnits(formData.amount, decimalPlaces);
-
-			if (!formData.referrer.startsWith('0x')) {
+			if (!formData.referrer.startsWith("0x")) {
 				throw new Error("Referrer address must start with '0x'");
 			}
 
-			const receipt = await contractInteractions.writeFunctions.createGrant(
-				BigInt(amountInWei.toString()),
-				formData.description,
-				formData.requirements,
-				Number(formData.durationDays),
-				formData.referrer as `0x${string}`,
-			);
+			if (formData.isHighlighted && !isPremiumUser) {
+				throw new Error("Premium membership required for highlighted grants");
+			}
 
-			setTxHash(receipt.transactionHash);
-			onClose();
+			const amountInWei = parseUnits(formData.amount, 18);
+			const [userAddress] = await walletClient.requestAddresses();
 
+			// First approve the token spend
+			const { request: approveRequest } = await publicClient.simulateContract({
+				address: devFundingConfig.tokenAddress,
+				abi: [{
+					type: "function",
+					name: "approve",
+					inputs: [
+						{ name: "spender", type: "address" },
+						{ name: "amount", type: "uint256" }
+					],
+					outputs: [{ type: "bool" }],
+					stateMutability: "nonpayable"
+				}],
+				functionName: "approve",
+				args: [contractAddress, amountInWei],
+				account: userAddress,
+			});
+
+			const approveHash = await walletClient.writeContract(approveRequest);
+			await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+			// Then create the grant
+			const { request } = await publicClient.simulateContract({
+				address: devFundingConfig.address,
+				abi: devFundingConfig.abi,
+				functionName: formData.isHighlighted ? "createHighlightedGrant" : "createGrant",
+				args: [
+					amountInWei,
+					formData.description,
+					formData.requirements,
+					BigInt(formData.durationDays),
+					formData.referrer as `0x${string}`,
+				],
+				account: userAddress,
+			});
+
+			const hash = await walletClient.writeContract(request);
+			await publicClient.waitForTransactionReceipt({ hash });
+
+			setSuccess(true);
+			setTimeout(() => {
+				handleClose();
+			}, 2000);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An unknown error occurred");
 			console.error("Error creating grant:", err);
@@ -73,11 +177,21 @@ const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 		}
 	};
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+	const handleInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+	) => {
 		const { name, value } = e.target;
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			[name]: value,
+		}));
+		setError(null);
+	};
+
+	const handleHighlightedChange = (checked: boolean) => {
+		setFormData((prev) => ({
+			...prev,
+			isHighlighted: checked,
 		}));
 		setError(null);
 	};
@@ -85,16 +199,18 @@ const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 	const handleClose = () => {
 		setFormData({
 			amount: "",
-			currency: "ENT",
 			description: "",
 			requirements: "",
 			durationDays: "",
 			referrer: "",
+			isHighlighted: false,
 		});
 		setError(null);
-		setTxHash(null);
+		setSuccess(false);
 		onClose();
 	};
+
+	const isPremiumExpired = premiumExpiry > 0 && premiumExpiry < Date.now() / 1000;
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
@@ -104,34 +220,18 @@ const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 				</DialogHeader>
 
 				<form onSubmit={handleSubmit} className="space-y-6">
-					<div className="grid grid-cols-3 gap-4">
-						<div className="col-span-2">
-							<Label htmlFor="amount">Grant Amount</Label>
-							<Input
-								id="amount"
-								name="amount"
-								type="number"
-								step="0.01"
-								required
-								placeholder="0.00"
-								value={formData.amount}
-								onChange={handleInputChange}
-							/>
-						</div>
-						<div className="col-span-1">
-							<Label htmlFor="currency">Currency</Label>
-							<select
-								id="currency"
-								name="currency"
-								className="rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-								value={formData.currency}
-								onChange={handleInputChange}
-							>
-								<option value="ENT">ENT</option>
-								<option value="USD">USDT</option>
-								<option value="EUR">ETH</option>
-							</select>
-						</div>
+					<div className="space-y-2">
+						<Label htmlFor="amount">Grant Amount (ENT)</Label>
+						<Input
+							id="amount"
+							name="amount"
+							type="number"
+							step="0.01"
+							required
+							placeholder="0.00"
+							value={formData.amount}
+							onChange={handleInputChange}
+						/>
 					</div>
 
 					<div className="space-y-2">
@@ -185,16 +285,44 @@ const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 						/>
 					</div>
 
+					<div className="flex items-center space-x-2">
+						<Checkbox
+							id="highlighted"
+							checked={formData.isHighlighted}
+							onCheckedChange={handleHighlightedChange}
+							disabled={!isPremiumUser || isPremiumExpired}
+						/>
+						<Label htmlFor="highlighted" className="text-sm">
+							Highlight this grant (Premium feature)
+						</Label>
+					</div>
+
+					{!isPremiumUser && formData.isHighlighted && (
+						<Alert className="bg-yellow-50 border-yellow-200">
+							<AlertDescription className="text-yellow-800">
+								Premium membership required to highlight grants. Purchase premium to unlock this feature.
+							</AlertDescription>
+						</Alert>
+					)}
+
+					{isPremiumExpired && (
+						<Alert className="bg-yellow-50 border-yellow-200">
+							<AlertDescription className="text-yellow-800">
+								Your premium membership has expired. Please renew to access premium features.
+							</AlertDescription>
+						</Alert>
+					)}
+
 					{error && (
 						<Alert variant="destructive">
 							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					)}
 
-					{txHash && (
-						<Alert>
-							<AlertDescription>
-								Transaction submitted! Hash: {txHash}
+					{success && (
+						<Alert className="bg-green-50 border-green-200">
+							<AlertDescription className="text-green-600">
+								Grant created successfully!
 							</AlertDescription>
 						</Alert>
 					)}

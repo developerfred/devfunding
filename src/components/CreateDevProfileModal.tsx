@@ -1,125 +1,254 @@
-'use client'
-import { Button } from "@/components/ui/button";
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/ban-ts-comment,  @typescript-eslint/no-explicit-any  */
+// @ts-nocheck
+
+"use client";
+import React, { useEffect, useState } from "react";
+import { Loader2, Plus, X, Github, Link as LinkIcon } from "lucide-react";
+import {
+	contractInteractions,
+	devFundingConfig,
+	publicClient,
+} from "@/lib/contract/client";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
-	DialogTitle,	
+	DialogTitle,
+	DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAccount } from "wagmi";
+import { createWalletClient, custom } from "viem";
+import { morph, morphHolesky } from "viem/chains";
 
-import { contractInteractions } from "@/lib/contract/client";
+type FlexibleProvider = {
+	request: (...args: any[]) => Promise<any>;
+	[key: string]: any;
+};
+const CreateProfileModal: React.FC = ({ isOpen, onClose }) => {
+	const [skills, setSkills] = useState([""]);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState(false);
+	const [isMetaMaskInstalled, setIsMetaMaskInstalled] =
+		useState<boolean>(false);
+	const [walletClient, setWalletClient] = useState<WalletClient | null>(null);
 
-import { useRef, useState, FormEvent} from "react";
-import { useAccount} from "wagmi";
+	useEffect(() => {
+		checkMetaMaskInstallation();
+	}, []);
 
+	function checkMetaMaskInstallation(): void {
+		const provider =
+			typeof window !== "undefined" ? window.ethereum : undefined;
+		const isInstalled = !!provider?.isMetaMask;
+		setIsMetaMaskInstalled(isInstalled);
 
-interface CreateDevProfileModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-}
+		if (isInstalled && provider) {
+			const flexibleProvider = provider as FlexibleProvider;
 
-export const CreateDevProfileModal: React.FC<CreateDevProfileModalProps> = ({ isOpen, onClose }) => {
-	const [open, setOpen] = useState(isOpen);
-	const [skills, setSkills] = useState<string[]>([""]);
-	const { isConnected, address } = useAccount();
-
-	const formRef = useRef<HTMLFormElement>(null);
-
-	const addSkill = () => {
-		setSkills(prevSkills => [...prevSkills, ""]);
-	};
-
-	const updateSkill = (index: number, value: string) => {
-		setSkills(prevSkills => {
-			const newSkills = [...prevSkills];
-			newSkills[index] = value;
-			return newSkills;
-		});
-	};
-
-	const removeSkill = (index: number) => {
-		setSkills(prevSkills => prevSkills.filter((_, i) => i !== index));
-	};
-
-	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		if (!isConnected) {
-			console.error("Wallet is not connected");
-			return;
+			const client = createWalletClient({
+				chain: morphHolesky,
+				transport: custom(flexibleProvider),
+			});
+			setWalletClient(client);
 		}
+	}
 
-		if (!address) {
-			console.error("No address available");
-			return;
+	const handleAddSkill = () => {
+		if (skills.length < 10) {
+			setSkills([...skills, ""]);
 		}
+	};
 
-		const formData = new FormData(event.currentTarget);
-		const githubHandle = formData.get("githubHandle") as string;
-		const portfolioUrl = formData.get("portfolioUrl") as string;
-		const filteredSkills = skills.filter(skill => skill.trim() !== "");
+	const handleRemoveSkill = (index) => {
+		if (skills.length > 1) {
+			setSkills(skills.filter((_, i) => i !== index));
+		}
+	};
+
+	const handleSkillChange = (index, value) => {
+		const newSkills = [...skills];
+		newSkills[index] = value;
+		setSkills(newSkills);
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		setIsSubmitting(true);
+		setError("");
+
+		const formData = new FormData(e.target);
+		const githubHandle = formData.get("githubHandle");
+		const portfolioUrl = formData.get("portfolioUrl");
+		const filteredSkills = skills.filter((skill) => skill.trim() !== "");
 
 		try {
-			const result = await contractInteractions.writeFunctions.createDevProfile(
-				githubHandle,
-				filteredSkills,
-				portfolioUrl
-			);
-			console.log("Transaction hash:", result.hash);
-			setOpen(false);
-			onClose();  
-		} catch (error) {
-			console.error("Error creating developer profile:", error);
+			if (!isMetaMaskInstalled || !walletClient) {
+				setError("Please install web3 wallet to create an ad.");
+				return;
+			}
+
+			const [address] = await walletClient.requestAddresses();
+
+			// Prepare transaction
+			const { request } = await publicClient.simulateContract({
+				address: devFundingConfig.address,
+				abi: devFundingConfig.abi,
+				functionName: "createDevProfile",
+				args: [githubHandle, filteredSkills, portfolioUrl],
+				account: address,
+			});
+
+			// Send transaction
+			const hash = await walletClient.writeContract(request);
+			await publicClient.waitForTransactionReceipt({ hash });
+
+			// Wait for confirmation
+			const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+			setSuccess(true);
+			setTimeout(() => {
+				onClose();
+				setSuccess(false);
+			}, 2000);
+		} catch (err) {
+			setError(err.message || "Failed to create profile. Please try again.");
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={(open) => {
-			setOpen(open);
-			if (!open) onClose(); 
-		}}>
-			<DialogContent className="sm:max-w-[425px]">
+		<Dialog
+			open={isOpen}
+			onOpenChange={(open) => !isSubmitting && !open && onClose()}
+		>
+			<DialogContent className="sm:max-w-[500px] h-[50vh] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>Create Developer Profile</DialogTitle>
-					<DialogDescription>
-						Set up your developer profile to start working on bounties.
+					<DialogTitle className="text-2xl font-bold">
+						Create Developer Profile
+					</DialogTitle>
+					<DialogDescription className="text-gray-500">
+						Set up your developer profile to start applying for grants and
+						bounties
 					</DialogDescription>
 				</DialogHeader>
-				<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-					<div>
-						<Label htmlFor="githubHandle">GitHub Handle</Label>
-						<Input id="githubHandle" name="githubHandle" required />
+				<form onSubmit={handleSubmit} className="space-y-2">
+					<div className="space-y-2">
+						<Label htmlFor="githubHandle" className="text-sm font-medium">
+							<Github className="w-4 h-4 inline-block mr-2" />
+							GitHub Handle
+						</Label>
+						<Input
+							id="githubHandle"
+							name="githubHandle"
+							placeholder="your-github-username"
+							required
+							className="w-full"
+						/>
 					</div>
-					<div>
-						<Label htmlFor="portfolioUrl">Portfolio URL</Label>
-						<Input id="portfolioUrl" name="portfolioUrl" required />
+
+					<div className="space-y-2">
+						<Label htmlFor="portfolioUrl" className="text-sm font-medium">
+							<LinkIcon className="w-4 h-4 inline-block mr-2" />
+							Portfolio URL
+						</Label>
+						<Input
+							id="portfolioUrl"
+							name="portfolioUrl"
+							type="url"
+							placeholder="https://your-portfolio.com"
+							required
+							className="w-full"
+						/>
 					</div>
-					{skills.map((skill, index) => (
-						<div key={index}>
-							<Label htmlFor={`skills[${index}]`}>Skill {index + 1}</Label>
-							<Input
-								id={`skills[${index}]`}
-								name={`skills[${index}]`}
-								value={skill}
-								onChange={(e) => updateSkill(index, e.target.value)}
-							/>
-							{index !== 0 && (
-								<Button type="button" variant="destructive" onClick={() => removeSkill(index)}>
-									Remove Skill
-								</Button>
+
+					<div className="space-y-4">
+						<div className="flex items-center justify-between">
+							<Label className="text-sm font-medium">Skills</Label>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={handleAddSkill}
+								disabled={skills.length >= 10 || isSubmitting}
+								className="h-8"
+							>
+								<Plus className="w-4 h-4 mr-1" /> Add Skill
+							</Button>
+						</div>
+
+						<div className="space-y-3">
+							{skills.map((skill, index) => (
+								<div key={index} className="flex gap-2">
+									<Input
+										value={skill}
+										onChange={(e) => handleSkillChange(index, e.target.value)}
+										placeholder={`Skill ${index + 1}`}
+										required
+										disabled={isSubmitting}
+									/>
+									{skills.length > 1 && (
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											onClick={() => handleRemoveSkill(index)}
+											disabled={isSubmitting}
+											className="h-10 w-10"
+										>
+											<X className="w-4 h-4" />
+										</Button>
+									)}
+								</div>
+							))}
+						</div>
+						<div className="space-y-3">
+							{error && (
+								<Alert variant="destructive" className="mb-4">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
+							)}
+
+							{success && (
+								<Alert className="mb-4 bg-green-50 border-green-200">
+									<AlertDescription className="text-green-600">
+										Profile created successfully!
+									</AlertDescription>
+								</Alert>
 							)}
 						</div>
-					))}
-					<Button type="button" variant="outline" onClick={addSkill}>
-						Add Skill
-					</Button>
-					<Button type="submit" variant="default">
-						Create Profile
-					</Button>
+					</div>
+
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onClose}
+							disabled={isSubmitting}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={isSubmitting}>
+							{isSubmitting ? (
+								<>
+									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+									Creating...
+								</>
+							) : (
+								"Create Profile"
+							)}
+						</Button>
+					</DialogFooter>
 				</form>
 			</DialogContent>
 		</Dialog>
 	);
 };
+
+export default CreateProfileModal;
