@@ -9,6 +9,7 @@ export const contractAddress =
 export const tokenAddress =
 	"0xf5056B96ab242C566002852d0b98ce0BcDf1af51" as const;
 
+
 export const devFundingConfig = {
 	tokenAddress: tokenAddress as Address,
 	address: contractAddress as Address,

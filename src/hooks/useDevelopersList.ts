@@ -36,7 +36,7 @@ export function useDevelopersList(): {
 			setIsLoading(true);
 			try {
 				const publicClient = createPublicClient({
-					chain: morph,
+					chain:  morph,
 					transport: http(),
 				});
 
@@ -72,13 +72,12 @@ export function useDevelopersList(): {
 					})) as any[];
 
 					if (developer[0]) {
-						// Check if the developer exists
 						devsList.push({
 							address: address,
 							githubHandle: developer[0],
 							reputation: Number(developer[2]),
 							completedGrants: Number(developer[1]),
-							grantsCreated: grants.filter((g) => g[0] === address).length, // Number of grants created
+							grantsCreated: grants.filter((g) => g[0] === address).length, 
 							grantsClaimed: grants.filter((g) => g[7] === address && g[8])
 								.length, // Number of grants claimed
 							referralCount: Number(

@@ -9,18 +9,19 @@ import {
 	createWalletClient,
 	custom,
 } from "viem";
-import { morph } from "viem/chains";
+
+import {  morph } from "viem/chains";
 import { contractAddress, devFundingConfig } from "./config";
 
 export const publicClient = createPublicClient({
-	chain: morph,
+	chain:  morph,
 	transport: http(),
 });
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const createViemWalletClient = (provider: any): WalletClient => {
 	return createWalletClient({
-		chain: morph,
+		chain:  morph,
 		transport: custom(provider),
 	});
 };
