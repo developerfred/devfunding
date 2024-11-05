@@ -14,7 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { publicClient, devFundingConfig } from "@/lib/contract/client";
 import { createWalletClient, custom, parseEther } from "viem";
-import { morphHolesky } from "viem/chains";
+import { morph } from "viem/chains";
 import type { Bounty } from "@/types";
 
 type FlexibleProvider = {
@@ -46,7 +46,7 @@ const BountyApplication: React.FC<BountyApplicationProps> = ({ bounty, onClose, 
     if (isInstalled && provider) {
       const flexibleProvider = provider as FlexibleProvider;
       const client = createWalletClient({
-        chain: morphHolesky,
+        chain: morph,
         transport: custom(flexibleProvider),
       });
       setWalletClient(client);

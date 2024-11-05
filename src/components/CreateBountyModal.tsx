@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { publicClient, devFundingConfig } from "@/lib/contract/client";
 import { createWalletClient, custom, parseUnits, isAddress } from "viem";
-import { morphHolesky } from "viem/chains";
+import { morph } from "viem/chains";
 import { contractAddress } from "@/lib/contract/config";
 
 type FlexibleProvider = {
@@ -71,7 +71,7 @@ const CreateBountyModal: React.FC<CreateBountyModalProps> = ({ isOpen, onClose }
 		if (isInstalled && provider) {
 			const flexibleProvider = provider as FlexibleProvider;
 			const client = createWalletClient({
-				chain: morphHolesky,
+				chain: morph,
 				transport: custom(flexibleProvider),
 			});
 			setWalletClient(client);
@@ -178,7 +178,7 @@ const CreateBountyModal: React.FC<CreateBountyModalProps> = ({ isOpen, onClose }
 
 			const tokenAddress = isCustomToken ? customTokenAddress :
 				formData.currency === "ENT" ? devFundingConfig.tokenAddress :
-					formData.currency === "USDT" ? "0x67330f6BC8dcE05816662785A89fb0611F6D149F" :
+					formData.currency === "USDT" ? "0xc7D67A9cBB121b3b0b9c053DD9f469523243379AF" :
 						"0x5300000000000000000000000000000000000011";
 
 			// Check if we have enough allowance

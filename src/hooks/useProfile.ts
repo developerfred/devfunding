@@ -3,7 +3,7 @@
 // @ts-nocheck
 
 import { devFundingConfig } from "@/lib/contract/config";
-import { morphHolesky } from "@reown/appkit/networks";
+import { morph } from "@reown/appkit/networks";
 
 import { useEffect, useState } from "react";
 import { http, createPublicClient } from "viem";
@@ -43,7 +43,7 @@ export function useProfile(address: string | null): {
 			setIsLoading(true);
 			try {
 				const publicClient = createPublicClient({
-					chain: morphHolesky,
+					chain: morph,
 					transport: http(),
 				});
 

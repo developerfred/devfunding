@@ -4,7 +4,7 @@
 "use client";
 
 import { projectId, wagmiAdapter } from "@/config";
-import { morphHolesky } from "@reown/appkit/networks";
+import { morph } from "@reown/appkit/networks";
 import { createAppKit } from "@reown/appkit/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type React from "react";
@@ -74,8 +74,8 @@ if (!projectId) {
 const appKit = createAppKit({
 	adapters: [wagmiAdapter],
 	projectId,
-	networks: [morphHolesky],
-	defaultNetwork: morphHolesky,
+	networks: [morph],
+	defaultNetwork: morph,
 	metadata: METADATA,
 	features: {
 		analytics: true,

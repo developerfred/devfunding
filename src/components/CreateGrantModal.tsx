@@ -19,7 +19,7 @@ import { devFundingConfig } from "@/lib/contract/config";
 import { publicClient } from "@/lib/contract/client";
 import { Loader2 } from "lucide-react";
 import { parseUnits, createWalletClient, custom } from "viem";
-import { morphHolesky } from "viem/chains";
+import { morph } from "viem/chains";
 import { useAccount } from "wagmi";
 import { contractAddress } from "@/lib/contract/config";
 
@@ -78,7 +78,7 @@ const CreateGrantModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 		if (isInstalled && provider) {
 			const flexibleProvider = provider as FlexibleProvider;
 			const client = createWalletClient({
-				chain: morphHolesky,
+				chain: morph,
 				transport: custom(flexibleProvider),
 			});
 			setWalletClient(client);

@@ -4,11 +4,11 @@
 
 import { devFundingConfig } from "@/lib/contract/config";
 import { http, createPublicClient, parseEther } from "viem";
-import { morphHolesky } from "viem/chains";
+import { morph } from "viem/chains";
 import { useAccount, useWriteContract } from "wagmi";
 
 const publicClient = createPublicClient({
-	chain: morphHolesky,
+	chain: morph,
 	transport: http(process.env.REACT_APP_RPC_URL),
 });
 

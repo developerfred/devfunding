@@ -52,7 +52,7 @@ const CreateProfileModal: React.FC = ({ isOpen, onClose }) => {
 			const flexibleProvider = provider as FlexibleProvider;
 
 			const client = createWalletClient({
-				chain: morphHolesky,
+				chain: morph,
 				transport: custom(flexibleProvider),
 			});
 			setWalletClient(client);
