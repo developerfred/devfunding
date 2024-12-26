@@ -3,7 +3,8 @@
 > Connecting developers with opportunities through decentralized funding
 
 
-🏆 Awards & Recognition
+## 🏆 Awards & Recognition
+
 DevFunding was awarded as a winner in Mission Reown #2 by MorphL2! As a second-time winner, the project continues to demonstrate excellence in building with Reown AppKit.
 
 
