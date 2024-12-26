@@ -2,6 +2,11 @@
 
 > Connecting developers with opportunities through decentralized funding
 
+
+🏆 Awards & Recognition
+DevFunding was awarded as a winner in Mission Reown #2 by MorphL2! As a second-time winner, the project continues to demonstrate excellence in building with Reown AppKit.
+
+
 ## Overview
 
 DevFunding is a decentralized platform that revolutionizes how developers find and secure funding for their work. By leveraging blockchain technology and smart contracts, we create a transparent, secure, and efficient marketplace for grants and bounties in the development community.
